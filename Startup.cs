@@ -1,3 +1,6 @@
+using dotnet.Data.Repository;
+using dotnet.Models;
+using dotnet.Repository;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -5,6 +8,8 @@ using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Pomelo.EntityFrameworkCore;
 
 namespace dotnet
 {
@@ -21,13 +26,19 @@ namespace dotnet
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddControllersWithViews();
+            services.AddControllers();
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
             {
                 configuration.RootPath = "client-app/build";
             });
+
+
+            services.AddDbContext<DefaultdbContext>(options => options.UseMySql(Configuration.GetConnectionString("Database"), Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.26-mysql")));
+
+            services.AddScoped(typeof(ICountryRepository), typeof(CountryRepository));
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -52,20 +63,25 @@ namespace dotnet
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller}/{action=Index}/{id?}");
+                endpoints.MapControllers();
             });
 
-            app.UseSpa(spa =>
+
+            app.UseExceptionHandler(new ExceptionHandlerOptions
             {
-                spa.Options.SourcePath = "client-app";
-
-                if (env.IsDevelopment())
-                {
-                    spa.UseReactDevelopmentServer(npmScript: "start");
-                }
+                ExceptionHandler = new JsonExceptionMiddleware().Invoke
             });
+
+
+            // app.UseSpa(spa =>
+            // {
+            //     spa.Options.SourcePath = "client-app";
+
+            //     if (env.IsDevelopment())
+            //     {
+            //         spa.UseReactDevelopmentServer(npmScript: "start");
+            //     }
+            // });
         }
     }
 }
