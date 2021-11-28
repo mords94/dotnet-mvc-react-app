@@ -11,6 +11,7 @@ namespace dotnet.Models
 {
     public partial class Guest : BaseModel<int?>
     {
+        [Required]
         public PersonDetails PersonDetails { get; set; }
 
         [JsonIgnore]

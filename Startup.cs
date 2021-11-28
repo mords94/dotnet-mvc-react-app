@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using dotnet.Converter;
 using System;
 using dotnet.Helpers;
+using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
+using Microsoft.Extensions.Hosting;
+using dotnet.Data.Validation;
 
 namespace dotnet
 {
@@ -24,20 +27,24 @@ namespace dotnet
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddControllers().AddNewtonsoftJson(opts =>
-               {
-                   opts.SerializerSettings.Converters.Add(new OptionalConverter<Country>());
-                   opts.SerializerSettings.Converters.Add(new OptionalConverter<Guest>());
-                   opts.SerializerSettings.Converters.Add(new OptionalConverter<Place>());
-                   opts.SerializerSettings.Converters.Add(new OptionalConverter<User>());
-                   opts.SerializerSettings.Converters.Add(new OptionalConverter<Visit>());
-               });
+            services.AddControllers();
+            services.AddControllers().ConfigureApiBehaviorOptions(options =>
+                       {
+                           options.InvalidModelStateResponseFactory = ModelStateValidator.ValidateModelState;
+                       }).AddNewtonsoftJson(opts =>
+              {
+                  opts.SerializerSettings.Converters.Add(new OptionalConverter<Country>());
+                  opts.SerializerSettings.Converters.Add(new OptionalConverter<Guest>());
+                  opts.SerializerSettings.Converters.Add(new OptionalConverter<Place>());
+                  opts.SerializerSettings.Converters.Add(new OptionalConverter<User>());
+                  opts.SerializerSettings.Converters.Add(new OptionalConverter<Visit>());
+              });
 
 
-            // services.AddSpaStaticFiles(configuration =>
-            // {
-            //     configuration.RootPath = "client-app/build";
-            // });
+            services.AddSpaStaticFiles(configuration =>
+            {
+                configuration.RootPath = "client-app/build";
+            });
 
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
 
@@ -59,16 +66,12 @@ namespace dotnet
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            // app.UseExceptionHandler(new ExceptionHandlerOptions
-            // {
-            //     ExceptionHandler = new JsonExceptionMiddleware().Invoke
-            // });
 
             app.UseExceptionHandler("/error");
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-            // app.UseSpaStaticFiles();
+            app.UseSpaStaticFiles();
 
             app.UseMiddleware<JwtMiddleware>();
 
@@ -81,15 +84,15 @@ namespace dotnet
             });
 
 
-            // app.UseSpa(spa =>
-            // {
-            //     spa.Options.SourcePath = "client-app";
+            app.UseSpa(spa =>
+            {
+                spa.Options.SourcePath = "client-app";
 
-            //     if (env.IsDevelopment())
-            //     {
-            //         spa.UseReactDevelopmentServer(npmScript: "start");
-            //     }
-            // });
+                if (env.IsDevelopment())
+                {
+                    spa.UseReactDevelopmentServer(npmScript: "start");
+                }
+            });
         }
     }
 }

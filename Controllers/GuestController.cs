@@ -5,7 +5,6 @@ using dotnet.Models;
 using dotnet.Repository;
 using dotnet.ViewModel.Paging;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace dotnet.Controllers
 {
@@ -28,23 +27,22 @@ namespace dotnet.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        [Authorize("ROLE_ADMIN")]
         public async Task<Page<GuestViewModel>> Get([FromQuery] int page, [FromQuery] int? size)
         {
             return ListMapper.MapPage<Guest, GuestViewModel>(await GuestRepository.findAll(new Pageable(page, size)));
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize("ROLE_ADMIN")]
         public async Task<GuestViewModel> Create([FromBody] GuestDto model)
         {
             Guest guest = Mapper.Map<GuestDto, Guest>(model);
             return Mapper.Map<Guest, GuestViewModel>(await GuestRepository.save(guest));
         }
 
-        [HttpPatch]
-        [Authorize]
-        [Route("{id}")]
+        [HttpPatch("{id}")]
+        [Authorize("ROLE_ADMIN")]
         public async Task<GuestViewModel> Update([FromRoute] int id, [FromBody] GuestDto model)
         {
             Guest guest = Mapper.Map<GuestDto, Guest>(model);

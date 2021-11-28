@@ -11,7 +11,7 @@ namespace dotnet.Models
 {
     public class GuestDto
     {
-        [Required]
+        [Required(ErrorMessage = "Person details should be populated")]
         public PersonDetails PersonDetails { get; set; }
     }
 }

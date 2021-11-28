@@ -25,6 +25,8 @@ namespace dotnet.Controllers
 
             using (HttpClient client = new HttpClient())
             {
+
+                //TODO: move auth url to env
                 HttpResponseMessage clientResponse = await client.PostAsJsonAsync<AuthenticateRequestDto>("http://localhost:8080/api/authenticate", model);
                 if (!clientResponse.IsSuccessStatusCode)
                 {

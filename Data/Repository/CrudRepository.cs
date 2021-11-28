@@ -108,11 +108,19 @@ namespace dotnet.Data.Repository
 
         public async Task<Optional<T>> findWhere(Expression<Func<T, bool>> predicate, bool last = false)
         {
-            var query = dbSet.Where(predicate).OrderBy((e => e.Id));
+            try
+            {
+                var query = dbSet.Where(predicate).OrderBy((e => e.Id));
 
-            var entity = await (last ? query.LastAsync() : query.FirstAsync());
 
-            return await Task.FromResult<Optional<T>>(Optional<T>.Of(entity));
+                var entity = await (last ? query.LastAsync() : query.FirstAsync());
+
+                return Optional<T>.Of(entity);
+            }
+            catch (InvalidOperationException)
+            {
+                return Optional<T>.Of(null);
+            }
         }
 
         public async Task<IEnumerable<T>> findAllWhere(Expression<Func<T, bool>> predicate)

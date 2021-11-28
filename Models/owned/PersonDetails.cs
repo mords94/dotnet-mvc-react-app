@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace dotnet.Models.Owned
 {
@@ -9,18 +10,23 @@ namespace dotnet.Models.Owned
     {
 
         [Column("first_name")]
-        [Required]
+        [JsonProperty("firstName")]
+        [Required(AllowEmptyStrings = false), Display(Name = "First name")]
         public string FirstName { get; set; }
 
         [Column("last_name")]
-        [Required]
+        [JsonProperty("lastName")]
+        [Required(AllowEmptyStrings = false), Display(Name = "Last name")]
         public string LastName { get; set; }
 
         [Column("email")]
-        [Required]
+        [JsonProperty("email")]
+        [Required(AllowEmptyStrings = false), Display(Name = "E-mail")]
         public string Email { get; set; }
+
         [Column("phone")]
-        [Required]
+        [Required(AllowEmptyStrings = false), Display(Name = "Phone")]
+        [JsonProperty("phone")]
         public string Phone { get; set; }
     }
 }

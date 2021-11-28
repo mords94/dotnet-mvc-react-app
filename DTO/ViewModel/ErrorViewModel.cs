@@ -1,17 +1,10 @@
-
-
-
-using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class ErrorViewModel
 {
-    public ErrorViewModel(int code, string message, string trace)
-    {
-        Status = code;
-        Message = message;
-        Trace = trace;
-    }
+    [JsonProperty("type")]
+    public string Type { get; set; }
 
     [JsonProperty("message")]
     public string Message { get; set; }
@@ -19,5 +12,8 @@ public class ErrorViewModel
     [JsonProperty("status")]
     public int Status { get; set; }
     [JsonProperty("trace")]
-    public string Trace { get; set; }
+    public string[] Trace { get; set; } = null;
+
+    [JsonProperty("fieldMessage")]
+    public IDictionary<string, string> FieldErrors { get; set; } = null;
 }

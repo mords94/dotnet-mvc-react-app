@@ -44,9 +44,7 @@ namespace dotnet.Controllers
             User user = (User)HttpContext.Items["User"];
             user.personDetails = model.personDetails;
 
-            await UserRepository.save(user);
-
-            return user;
+            return await UserRepository.save(user);
         }
 
 

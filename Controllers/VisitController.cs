@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using dotnet.DTO;
 using dotnet.DTO.Request;
 using dotnet.Models;
 using dotnet.Repository;
@@ -41,9 +43,50 @@ namespace dotnet.Controllers
             return ListMapper.MapPage<Visit, VisitViewModel>(visits);
         }
 
-        [HttpGet]
+
+        // @PatchMapping("/{id}")
+        // @Operation(summary = "Updates a visit", description = "Only a check-out date can be set ", tags = { "visit" })
+        // public ResponseEntity<?> updateVisit(@PathVariable Integer id, @Valid @RequestBody UpdateVisitRequest dto) {
+        //     Visit visit = visitRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        //     visit.setFinishDate(dto.getFinishDate());
+        //     visitRepository.save(visit);
+        //     return ResponseEntity.ok(visit);
+        // }
+
+        // @DeleteMapping("/{id}")
+        // @Operation(summary = "Deletes a visit", tags = { "visit" })
+        // @ResponseStatus(HttpStatus.NO_CONTENT)
+        // public ResponseEntity<Void> deleteVisit(@PathVariable Integer id) {
+        //     visitRepository.deleteById(id);
+        //     return ResponseEntity.noContent().build();
+        // }
+
+
+        [HttpPatch("{id}")]
         [Authorize]
-        [Route("current_user/all")]
+        public async Task<VisitViewModel> UpdateVisit([FromRoute] int id, [FromBody] UpdateVisitDto updateVisitDto)
+        {
+            var maybeVisit = await VisitRepository.findById(id);
+            Visit visit = maybeVisit.OrElseThrow(() => ResponseStatusException.NotFound("Visit not found with id: " + id));
+
+            visit.FinishDate = updateVisitDto.FinishDate;
+            return Mapper.Map<Visit, VisitViewModel>(await VisitRepository.save(visit));
+        }
+
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteVisit([FromRoute] int id)
+        {
+            await VisitRepository.deleteById(id);
+
+            return NoContent();
+        }
+
+
+        [HttpGet("current_user/all")]
+        [Authorize]
         public async Task<IEnumerable<VisitViewModel>> GetAllVisitForCurrentUser()
         {
             User user = (User)HttpContext.Items["User"];
@@ -57,25 +100,8 @@ namespace dotnet.Controllers
             return ListMapper.Map<Visit, VisitViewModel>(visits);
         }
 
-        // @Operation(summary = "Fetches an in-progress visit for the current logged in user", tags = { "visit" })
-        // public ResponseEntity<Visit> getVisit(@RequestHeader("Authorization") String token) {
-        //     String email = jwtTokenUtil.getUsernameFromToken(token.replace("Bearer ", ""));
-        //     var user = userRepository.findByPersonDetailsEmail(email).get();
-
-        //     Guest guest = guestRepository.findByPersonDetailsEmail(user.getPersonDetails().getEmail()).orElseThrow(
-        //             () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Guest with this e-mail not found"));
-
-        //     var visits = guest.getVisits();
-
-        //     Visit visit = visits.stream().filter(v -> v.getFinishDate() == null).findFirst()
-        //             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Visit not found"));
-
-        //     return ResponseEntity.ok(visit);
-        // }
-
-        [HttpGet]
+        [HttpGet("current_user")]
         [Authorize]
-        [Route("current_user")]
         public async Task<VisitViewModel> GetVisitForCurrentUser()
         {
             User user = (User)HttpContext.Items["User"];
@@ -83,37 +109,13 @@ namespace dotnet.Controllers
             Optional<Guest> maybeGuest = await GuestRepository.findByEmail(user.personDetails.Email);
             Guest guest = maybeGuest.OrElseThrow<ResponseStatusException>(() => ResponseStatusException.NotFound("Guest with this e-mail not found"));
 
-            Optional<Visit> maybeVisit = await VisitRepository.findWhere(visit => visit.Guests.Any(vg => vg.Id == guest.Id), last: true);
+            Optional<Visit> maybeVisit = await VisitRepository.findWhere(visit => visit.Guests.Any(vg => vg.Id == guest.Id) && visit.FinishDate == null, last: true);
 
             Visit visit = maybeVisit.OrElseThrow(() => ResponseStatusException.NotFound("Visit not found"));
 
             return Mapper.Map<Visit, VisitViewModel>(visit);
         }
 
-
-        //     @Operation(summary = "Create a new visit", tags = { "visit" })
-        //     @ResponseStatus(HttpStatus.CREATED)
-        //     public ResponseEntity<?> createVisit(@Valid @RequestBody CreateVisitRequest dto) {
-        //         Visit visit = new Visit();
-        //         List<Guest> guestsToSave = new ArrayList<Guest>();
-
-        //         for (Guest guest : dto.getGuests()) {
-        //             Optional<Guest> guestInDatabase = guestRepository
-        //                     .findByPersonDetailsEmail(guest.getPersonDetails().getEmail());
-
-        //             if (guestInDatabase.isPresent()) {
-        //                 guestsToSave.add(guestInDatabase.get());
-        //             } else {
-        //                 guestsToSave.add(guestRepository.save(guest));
-        //             }
-        //         }
-        //         visit.setGuests(guestsToSave);
-        //         visit.setPlace(placeRepository.findById(dto.getPlace().getId()).get());
-
-        //         visitRepository.save(visit);
-
-        //         return new ResponseEntity<Visit>(visit, HttpStatus.CREATED);
-        //     }
 
         [HttpPost]
         [Authorize]
