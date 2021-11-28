@@ -1,24 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
-
+#nullable disable
 
 namespace dotnet.Models
 {
-    public partial class Visit
+    public partial class Visit : BaseModel<int?>
     {
-
-        public Visit()
-        {
-            Guests = new HashSet<Guest>();
-
-        }
-        public int Id { get; set; }
+        [DataType(DataType.Date)]
         public DateTime? FinishDate { get; set; }
+
+        [DataType(DataType.Date)]
+
         public DateTime? VisitDate { get; set; }
 
-        public virtual Place Place { get; set; }
+        public Guid PlaceId { get; set; }
 
-        public virtual ICollection<Guest> Guests { get; set; }
+
+        public Place Place { get; set; }
+
+        public ICollection<Guest> Guests { get; set; }
     }
 }

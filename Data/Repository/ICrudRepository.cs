@@ -5,19 +5,16 @@ namespace dotnet.Data.Repository
 {
 
 
-    public interface ICrudRepository<T, ID> : IRepository
+    public interface ICrudRepository<T, ID> : IRepository where T : BaseModel<ID>
     {
         Task<T> save(T entity);
-        IEnumerable<T> saveAll(IEnumerable<T> entities);
         Task<Optional<T>> findById(ID id);
         Task<bool> existsById(ID id);
         Task<IEnumerable<T>> findAll();
         Task<IEnumerable<T>> findAllById(IEnumerable<ID> ids);
         Task<long> count();
-        Task deleteById(ID id);
-        Task delete(T entity);
-        Task deleteAllById(IEnumerable<ID> ids);
-        Task deleteAll(IEnumerable<T> entities);
-        Task deleteAll();
+        Task<bool> deleteById(ID id);
+        bool delete(T entity);
+        Task<int> getNextId();
     }
 }

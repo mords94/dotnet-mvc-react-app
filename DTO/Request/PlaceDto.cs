@@ -1,13 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using dotnet.Models.Owned;
 
 #nullable disable
 
 namespace dotnet.Models
 {
-    public partial class Country : BaseModel<int>
+    public partial class PlaceDto
     {
+        public Address Address { get; set; }
         public string Name { get; set; }
+
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -9,11 +9,9 @@ using Newtonsoft.Json;
 
 namespace dotnet.Models
 {
-    public partial class Guest : BaseModel<int?>
+    public class GuestDto
     {
+        [Required]
         public PersonDetails PersonDetails { get; set; }
-
-        [JsonIgnore]
-        public virtual ICollection<Visit> Visits { get; set; }
     }
 }

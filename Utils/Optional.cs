@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 
 #nullable disable
 public sealed class Optional<T>
@@ -17,7 +18,14 @@ public sealed class Optional<T>
     public bool HasValue => value != null;
     public bool IsPresent => HasValue;
 
-    public T Get() => value;
+    public T Get()
+    {
+        if (!IsPresent)
+        {
+            throw new ResponseStatusException(HttpStatusCode.NotFound, typeof(T).Name + " resource not found");
+        }
+        return value;
+    }
 
     public T OrElse(T other) => HasValue ? value : other;
     public T OrElseGet(Func<T> getOther) => HasValue ? value : getOther();

@@ -1,15 +1,13 @@
-using dotnet.Data.Repository;
 using dotnet.Models;
 using dotnet.Repository;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Pomelo.EntityFrameworkCore;
+using dotnet.Converter;
+using System;
+using dotnet.Helpers;
 
 namespace dotnet
 {
@@ -26,50 +24,60 @@ namespace dotnet
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson(opts =>
+               {
+                   opts.SerializerSettings.Converters.Add(new OptionalConverter<Country>());
+                   opts.SerializerSettings.Converters.Add(new OptionalConverter<Guest>());
+                   opts.SerializerSettings.Converters.Add(new OptionalConverter<Place>());
+                   opts.SerializerSettings.Converters.Add(new OptionalConverter<User>());
+                   opts.SerializerSettings.Converters.Add(new OptionalConverter<Visit>());
+               });
 
-            // In production, the React files will be served from this directory
-            services.AddSpaStaticFiles(configuration =>
-            {
-                configuration.RootPath = "client-app/build";
-            });
+
+            // services.AddSpaStaticFiles(configuration =>
+            // {
+            //     configuration.RootPath = "client-app/build";
+            // });
+
+            services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
+
+            services.AddDbContext<DefaultdbContext>(options => options.UseMySql(Configuration.GetConnectionString("Database"), Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.26-mysql")).UseSnakeCaseNamingConvention().LogTo(Console.WriteLine).EnableSensitiveDataLogging());
+
+            services.AddScoped(typeof(CountryRepository), typeof(CountryRepository));
+            services.AddScoped(typeof(GuestRepository), typeof(GuestRepository));
+            services.AddScoped(typeof(VisitRepository), typeof(VisitRepository));
+            services.AddScoped(typeof(UserRepository), typeof(UserRepository));
+            services.AddScoped(typeof(PlaceRepository), typeof(PlaceRepository));
+
+            services.AddAutoMapper(typeof(DefaultProfile));
 
 
-            services.AddDbContext<DefaultdbContext>(options => options.UseMySql(Configuration.GetConnectionString("Database"), Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.26-mysql")));
-
-            services.AddScoped(typeof(ICountryRepository), typeof(CountryRepository));
+            services.AddScoped<IListMapper, ListMapper>();
 
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
+            // app.UseExceptionHandler(new ExceptionHandlerOptions
+            // {
+            //     ExceptionHandler = new JsonExceptionMiddleware().Invoke
+            // });
+
+            app.UseExceptionHandler("/error");
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-            app.UseSpaStaticFiles();
+            // app.UseSpaStaticFiles();
+
+            app.UseMiddleware<JwtMiddleware>();
+
 
             app.UseRouting();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-            });
-
-
-            app.UseExceptionHandler(new ExceptionHandlerOptions
-            {
-                ExceptionHandler = new JsonExceptionMiddleware().Invoke
             });
 
 

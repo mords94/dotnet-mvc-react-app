@@ -12,25 +12,26 @@ namespace dotnet.Controllers
     [Route("/api/country")]
     public class CountryController : ControllerBase
     {
-        private ICountryRepository CountryRepository;
+        private CountryRepository CountryRepository;
 
-        public CountryController(ICountryRepository countryRepository)
+        public CountryController(CountryRepository countryRepository)
         {
             CountryRepository = countryRepository;
         }
 
+
         [HttpGet]
-        [Route("")]
-        public async Task<IEnumerable<Country>> Get()
+        [Route("{id}")]
+        public async Task<Optional<Country>> Get(int id)
+        {
+            return await CountryRepository.findById(id);
+        }
+
+        [HttpGet]
+        public async Task<IEnumerable<Country>> GetAll()
         {
             return await CountryRepository.findAll();
         }
 
-        [HttpGet]
-        [Route("/all")]
-        public NoContentResult GetAll()
-        {
-            return NoContent();
-        }
     }
 }
