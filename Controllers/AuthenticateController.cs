@@ -1,11 +1,9 @@
-using System;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using dotnet.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 
 namespace dotnet.Controllers
 {
@@ -20,6 +18,7 @@ namespace dotnet.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<AuthenicateViewModel> Authenticate(AuthenticateRequestDto model)
         {
 

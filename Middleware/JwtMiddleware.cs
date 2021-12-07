@@ -1,74 +1,97 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Text;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using dotnet.Helpers;
 using dotnet.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 public class JwtMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly AppSettings _appSettings;
 
+    private readonly IMemoryCache _memoryCache;
 
     private readonly ILogger<JwtMiddleware> _logger;
 
-    public JwtMiddleware(RequestDelegate next, IOptions<AppSettings> appSettings, ILogger<JwtMiddleware> logger)
+    public JwtMiddleware(RequestDelegate next, IOptions<AppSettings> appSettings, ILogger<JwtMiddleware> logger, IMemoryCache memoryCache)
     {
         _next = next;
         _appSettings = appSettings.Value;
         _logger = logger;
+        _memoryCache = memoryCache;
     }
 
     public async Task Invoke(HttpContext context, UserRepository userRepository)
     {
-        var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+        var endpoint = context.GetEndpoint();
+        var allowAnonymous = context.GetEndpoint().Metadata.OfType<AllowAnonymousAttribute>().Any();
 
+        if (!allowAnonymous)
+        {
+            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
-        _logger.LogDebug("Token: " + token);
-        if (token != null)
-            await attachUserToContext(context, userRepository, token);
+            _logger.LogDebug("Token: " + token);
+            if (token != null)
+                await attachUserToContext(context, userRepository, token);
 
+        }
         await _next(context);
     }
 
     private async Task attachUserToContext(HttpContext context, UserRepository userRepository, string token)
     {
-        var tokenHandler = new JwtSecurityTokenHandler();
-
-
-        // var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-        // tokenHandler.ValidateToken(token, new TokenValidationParameters
-        // {
-        //     ValidateIssuerSigningKey = false,
-        //     IssuerSigningKey = new SymmetricSecurityKey(key),
-        //     ValidateIssuer = false,
-        //     ValidateAudience = false,
-        //     ClockSkew = TimeSpan.Zero
-        // }, out SecurityToken validatedToken);
-
-        // var jwtToken = (JwtSecurityToken)validatedToken;
-
-
-        //FIXME: validate token
-
-        try
+        using (HttpClient client = new HttpClient())
         {
+            try
+            {
+                using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, "http://localhost:8080/api/user/profile"))
+                {
+                    if (!_memoryCache.TryGetValue(token, out String email))
+                    {
+                        var cacheExpiryOptions = new MemoryCacheEntryOptions
+                        {
+                            AbsoluteExpiration = DateTime.Now.AddSeconds(50),
+                            Priority = CacheItemPriority.High,
+                            SlidingExpiration = TimeSpan.FromSeconds(20)
+                        };
 
-            var nonValidatedToken = tokenHandler.ReadJwtToken(token);
-            var email = nonValidatedToken.Subject;
 
-            // attach user to context on successful jwt validation
-            context.Items["User"] = (await userRepository.findByEmail(email)).Get();
-        }
-        catch
-        {
-            _logger.LogDebug("JWT doesn't contain a valid subject");
+                        requestMessage.Headers.Authorization =
+                            new AuthenticationHeaderValue("Bearer", token);
+
+
+
+
+                        HttpResponseMessage clientResponse = await client.SendAsync(requestMessage);
+
+                        if (!clientResponse.IsSuccessStatusCode)
+                        {
+                            throw ResponseStatusException.Unauthorized("You need to be logged in.");
+                        }
+
+                        var tokenHandler = new JwtSecurityTokenHandler();
+                        var nonValidatedToken = tokenHandler.ReadJwtToken(token);
+                        email = nonValidatedToken.Subject;
+
+                        _memoryCache.Set(token, email, cacheExpiryOptions);
+                    }
+
+                    context.Items["User"] = (await userRepository.findByEmail(email)).Get();
+                }
+            }
+            catch
+            {
+                _logger.LogDebug("Uncaught error in the JWT middleware");
+            }
         }
     }
 }

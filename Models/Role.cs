@@ -9,6 +9,7 @@ namespace dotnet.Models
 {
     public partial class Role : BaseModel<int>
     {
+        [JsonProperty("roleType")]
         public string RoleType { get; set; }
 
         [JsonIgnore]

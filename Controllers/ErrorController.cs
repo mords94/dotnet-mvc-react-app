@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 
-[AllowAnonymous]
 public class ErrorsController : ControllerBase
 {
     private IWebHostEnvironment env;
@@ -17,6 +16,7 @@ public class ErrorsController : ControllerBase
     }
 
     [Route("/error")]
+    [AllowAnonymous]
     public ErrorViewModel Error()
     {
         var context = HttpContext.Features.Get<IExceptionHandlerFeature>();

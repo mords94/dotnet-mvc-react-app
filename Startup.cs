@@ -41,10 +41,12 @@ namespace dotnet
               });
 
 
-            services.AddSpaStaticFiles(configuration =>
-            {
-                configuration.RootPath = "client-app/build";
-            });
+            // services.AddSpaStaticFiles(configuration =>
+            // {
+            //     configuration.RootPath = "client-app/build";
+            // });
+            services.AddMemoryCache();
+
 
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
 
@@ -71,12 +73,11 @@ namespace dotnet
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-            app.UseSpaStaticFiles();
-
-            app.UseMiddleware<JwtMiddleware>();
 
 
             app.UseRouting();
+
+            app.UseMiddleware<JwtMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {
@@ -84,15 +85,15 @@ namespace dotnet
             });
 
 
-            app.UseSpa(spa =>
-            {
-                spa.Options.SourcePath = "client-app";
+            // app.UseSpa(spa =>
+            // {
+            //     spa.Options.SourcePath = "client-app";
 
-                if (env.IsDevelopment())
-                {
-                    spa.UseReactDevelopmentServer(npmScript: "start");
-                }
-            });
+            //     if (env.IsDevelopment())
+            //     {
+            //         spa.UseReactDevelopmentServer(npmScript: "start");
+            //     }
+            // });
         }
     }
 }
