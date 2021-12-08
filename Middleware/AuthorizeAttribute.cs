@@ -42,6 +42,8 @@ public class AuthorizeAttribute : Attribute, IAuthorizationFilter
     public void OnAuthorization(AuthorizationFilterContext context)
     {
         var user = (User)context.HttpContext.Items["User"];
+
+        // TODO: it can be removed, since the JWT middleware handles this case
         if (user == null)
         {
             throw ResponseStatusException.Unauthorized("You have to be logged in.");
